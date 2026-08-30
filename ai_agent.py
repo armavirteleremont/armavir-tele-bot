@@ -114,20 +114,23 @@ async def handle_customer_message(update: Update, context: ContextTypes.DEFAULT_
     logging.info(f"📩 Входящее сообщение: {user_text}")
     
     try:
-        response = ai_client.models.generate_content(
-            model=MODEL_NAME,
+        # Создаем клиента с явной передачей ключа из Environment
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+        
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
             contents=user_text,
             config={'system_instruction': PROMPT_SALES}
         )
         
-        if response.text:
+        if response and response.text:
             await update.message.reply_text(response.text)
         else:
             await update.message.reply_text("Подскажите, пожалуйста, марку и диагональ вашего телевизора?")
             
     except Exception as e:
-        logging.error(f"❌ Ошибка Gemini API: {e}")
-        await update.message.reply_text("Извините, произошел временный сбой. Пожалуйста, позвоните нам напрямую: +7 (929) 850-19-93.")
+        logging.error(f"❌ Подробная ошибка Gemini API: {e}")
+        await update.message.reply_text(f"Извините, произошел временный сбой. Пожалуйста, позвоните нам напрямую: +7 (929) 850-19-93.")
 
 async def generate_and_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     topic = " ".join(context.args) if context.args else "Замена подсветки телевизора LG и Samsung"
