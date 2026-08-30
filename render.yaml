@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: armavirteleremont-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python ai_agent.py
+    envVars:
+      - key: PORT
+        value: 10000
