@@ -108,7 +108,7 @@ async def handle_customer_message(update: Update, context: ContextTypes.DEFAULT_
         
         # Используем обновленную модель gemini-3.7-flash
        response = client.models.generate_content(
-            model='gemini-3.7-flash',
+            model='gemini-2.5-flash',
             contents=user_text,
             config={'system_instruction': PROMPT_SALES}
         )
@@ -129,7 +129,7 @@ async def generate_and_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
         response = client.models.generate_content(
-            model='gemini-3.7-flash',
+            model='gemini-2.5-flash',
             contents=f"Напиши рекламный пост на тему: {topic}",
             config={'system_instruction': PROMPT_COPYWRITER}
         )
