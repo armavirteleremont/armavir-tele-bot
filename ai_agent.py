@@ -96,14 +96,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_customer_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_text = update.message.text
-    logging.info(f"📩 Сообщение от клиента: {user_text}")
+    logging.info(f"📩 Входящее сообщение: {user_text}")
     
     try:
-        if not GEMINI_API_KEY:
-            raise ValueError("GEMINI_API_KEY не установлен в Environment!")
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            await update.message.reply_text("❌ Ошибка: В Render не задана переменная GEMINI_API_KEY!")
+            return
 
-        # Вызов ИИ Gemini через новый синтаксис библиотеки google-genai
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        client = genai.Client(api_key=api_key)
+        
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=user_text,
@@ -113,11 +115,12 @@ async def handle_customer_message(update: Update, context: ContextTypes.DEFAULT_
         if response and response.text:
             await update.message.reply_text(response.text)
         else:
-            await update.message.reply_text("Уточните, пожалуйста, марку и диагональ вашего телевизора?")
+            await update.message.reply_text("Подскажите, пожалуйста, марку и диагональ вашего телевизора?")
             
     except Exception as e:
-        logging.error(f"❌ Ошибка Gemini API: {e}", exc_info=True)
-        await update.message.reply_text("Извините, произошел временный сбой. Пожалуйста, позвоните нам напрямую: +7 (929) 850-19-93.")
+        error_msg = f"❌ Ошибка Gemini API:\n`{str(e)}`"
+        logging.error(error_msg, exc_info=True)
+        await update.message.reply_text(error_msg, parse_mode='Markdown')
 
 async def generate_and_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     topic = " ".join(context.args) if context.args else "Замена подсветки телевизора"
