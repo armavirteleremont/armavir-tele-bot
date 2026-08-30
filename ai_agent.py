@@ -36,7 +36,7 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 CHANNEL_ID = os.environ.get("CHANNEL_ID", "-1003786532521")
 
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
-MODEL_NAME = 'gemini-2.5-flash'
+MODEL_NAME = 'gemini-1.5-flash'
 
 # ==========================================
 # 🧠 СИСТЕМНЫЕ ИНСТРУКЦИИ ДЛЯ АГЕНТОВ
