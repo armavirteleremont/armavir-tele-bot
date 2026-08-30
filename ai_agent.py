@@ -107,7 +107,7 @@ async def handle_customer_message(update: Update, context: ContextTypes.DEFAULT_
         client = genai.Client(api_key=api_key)
         
         # Используем обновленную модель gemini-2.5-flash
-       response = client.models.generate_content(
+        response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=user_text,
             config={'system_instruction': PROMPT_SALES}
