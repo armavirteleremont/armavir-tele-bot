@@ -7,7 +7,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 # ==========================================
 # 🔑 НАСТРОЙКИ И КЛЮЧИ ДОСТУПА
 # ==========================================
-GEMINI_API_KEY = "AQ.Ab8RN6IOxa_gS9F3USQ8M9xtITZW5SKGu810lgfgQ_peL7SA9w"
+import os
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 TELEGRAM_BOT_TOKEN = "760784307:AAGKBm_HX49QfuEtSeNNz-WkcwW8thA_66U"
 CHANNEL_ID = -1003786532521
 
