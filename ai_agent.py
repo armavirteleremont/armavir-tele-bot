@@ -58,7 +58,7 @@ PROMPT_SALES = """
    Ориентировочная стоимость:
    - 32" — от 2 500 до 5 000 руб.
    - 40"-43" — от 4 000 до 7 000 руб.
-   - 49"-50" — от 5 000 до 9 000 руб.
+   - 49"-50" — от 6 000 до 9 000 руб.
    - 55"+ — от 9 000 руб.
 2. Не включается: Проблема с блоком питания.
 3. Зависает на логотипе: Сбой прошивки.
@@ -106,8 +106,9 @@ async def handle_customer_message(update: Update, context: ContextTypes.DEFAULT_
 
         client = genai.Client(api_key=api_key)
         
+        # Используем обновленную модель gemini-3.6-flash
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.6-flash',
             contents=user_text,
             config={'system_instruction': PROMPT_SALES}
         )
@@ -118,9 +119,8 @@ async def handle_customer_message(update: Update, context: ContextTypes.DEFAULT_
             await update.message.reply_text("Подскажите, пожалуйста, марку и диагональ вашего телевизора?")
             
     except Exception as e:
-        error_msg = f"❌ Ошибка Gemini API:\n`{str(e)}`"
-        logging.error(error_msg, exc_info=True)
-        await update.message.reply_text(error_msg, parse_mode='Markdown')
+        logging.error(f"❌ Ошибка Gemini API: {e}", exc_info=True)
+        await update.message.reply_text("Извините, произошел временный сбой. Пожалуйста, позвоните нам напрямую: +7 (929) 850-19-93.")
 
 async def generate_and_post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     topic = " ".join(context.args) if context.args else "Замена подсветки телевизора"
