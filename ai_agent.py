@@ -45,9 +45,37 @@ def send_telegram_message(text):
 def check_kwork_loop():
     print("🔎 Фоновый парсер Kwork запущен!")
     
-    # 🚀 ДОБАВЛЯЕМ ТЕСТОВУЮ ОТПРАВКУ ПРИ СТАРТЕ:
-    send_telegram_message("🤖 <b>Тест бота:</b> Сервер запущен, связь с Telegram работает!")
-    
+    # 🧪 ТЕСТ ПАРСЕРА ПРИ СТАРТЕ: заходим на Kwork и присылаем первый заказ
+    try:
+        response = requests.get(KWORK_URL, headers=HEADERS, timeout=15)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+            cards = soup.select(".project-card")
+            
+            if cards:
+                first_card = cards[0]
+                title_elem = first_card.select_one(".project-card__title")
+                title = title_elem.get_text(strip=True) if title_elem else "Без названия"
+                
+                link_elem = first_card.select_one("a")
+                link = link_elem["href"] if link_elem and "href" in link_elem.attrs else "https://kwork.ru"
+                if not link.startswith("http"):
+                    link = "https://kwork.ru" + link
+                
+                send_telegram_message(
+                    f"🧪 <b>Тест парсера Kwork успешен!</b>\n\n"
+                    f"📊 Найдено заказов на странице: <b>{len(cards)}</b>\n"
+                    f"📌 <b>Свежий заказ:</b> {title}\n"
+                    f"🔗 <a href='{link}'>Открыть заказ на Kwork</a>"
+                )
+            else:
+                send_telegram_message("⚠️ Kwork открылся (200 OK), но селектор `.project-card` не нашёл карточек.")
+        else:
+            send_telegram_message(f"⚠️ Ошибка доступа к Kwork! Код ответа: {response.status_code}")
+    except Exception as e:
+        send_telegram_message(f"❌ Исключение при тесте парсера: {e}")
+
+    # Основной бессрочный цикл мониторингановости
     while True:
         try:
             response = requests.get(KWORK_URL, headers=HEADERS, timeout=15)
