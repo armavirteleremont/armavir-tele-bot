@@ -1,21 +1,20 @@
 import os
 import time
 import threading
+import html  # <--- Обязательно импортируем для экранирования HTML
 import requests
 from bs4 import BeautifulSoup
 from flask import Flask
 
-# 1. Минимальный веб-сервер Flask для поддержания работы на бесплатном тарифе Render (Web Service)
 app = Flask(__name__)
 
 @app.route('/')
 def home():
     return "Kwork Bot is alive and running!"
 
-# 2. Настройки и переменные
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
-KWORK_URL = "https://kwork.ru/projects?c=11"  # Лента заказов «Разработка и IT»
+KWORK_URL = "https://kwork.ru/projects?c=11"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -32,50 +31,19 @@ def send_telegram_message(text):
         "chat_id": CHAT_ID,
         "text": text,
         "parse_mode": "HTML",
-        "disable_web_page_preview": False
+        "disable_web_page_preview": True
     }
     try:
         response = requests.post(url, json=payload, timeout=10)
         if response.status_code != 200:
-            print(f"Ошибка отправки Telegram: {response.text}")
+            # Выводим точный текст ошибки от Telegram API в логи Render
+            print(f"❌ Ошибка отправки Telegram (код {response.status_code}): {response.text}")
     except Exception as e:
-        print(f"Ошибка отправки в Telegram: {e}")
+        print(f"❌ Исключение при отправке в Telegram: {e}")
 
-# 3. Фоновый цикл парсинга Kwork
 def check_kwork_loop():
     print("🔎 Фоновый парсер Kwork запущен!")
     
-    # 🧪 ТЕСТ ПАРСЕРА ПРИ СТАРТЕ: заходим на Kwork и присылаем первый заказ
-    try:
-        response = requests.get(KWORK_URL, headers=HEADERS, timeout=15)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, "html.parser")
-            cards = soup.select(".project-card")
-            
-            if cards:
-                first_card = cards[0]
-                title_elem = first_card.select_one(".project-card__title")
-                title = title_elem.get_text(strip=True) if title_elem else "Без названия"
-                
-                link_elem = first_card.select_one("a")
-                link = link_elem["href"] if link_elem and "href" in link_elem.attrs else "https://kwork.ru"
-                if not link.startswith("http"):
-                    link = "https://kwork.ru" + link
-                
-                send_telegram_message(
-                    f"🧪 <b>Тест парсера Kwork успешен!</b>\n\n"
-                    f"📊 Найдено заказов на странице: <b>{len(cards)}</b>\n"
-                    f"📌 <b>Свежий заказ:</b> {title}\n"
-                    f"🔗 <a href='{link}'>Открыть заказ на Kwork</a>"
-                )
-            else:
-                send_telegram_message("⚠️ Kwork открылся (200 OK), но селектор `.project-card` не нашёл карточек.")
-        else:
-            send_telegram_message(f"⚠️ Ошибка доступа к Kwork! Код ответа: {response.status_code}")
-    except Exception as e:
-        send_telegram_message(f"❌ Исключение при тесте парсера: {e}")
-
-    # Основной бессрочный цикл мониторингановости
     while True:
         try:
             response = requests.get(KWORK_URL, headers=HEADERS, timeout=15)
@@ -100,12 +68,14 @@ def check_kwork_loop():
                     if project_id in seen_projects:
                         continue
                     
-                    title = link_tag.text.strip()
+                    # 🛡 Экранируем спецсимволы HTML, чтобы Telegram не выдавал ошибку
+                    title = html.escape(link_tag.text.strip())
+                    
                     price_tag = card.select_one(".project-card__price")
-                    price = price_tag.text.strip() if price_tag else "Договорная"
+                    price = html.escape(price_tag.text.strip()) if price_tag else "Договорная"
                     
                     text_tag = card.select_one(".project-card__description")
-                    description = text_tag.text.strip()[:200] + "..." if text_tag else "Без описания"
+                    description = html.escape(text_tag.text.strip()[:200]) + "..." if text_tag else "Без описания"
 
                     message = (
                         f"🚨 <b>Новый заказ на Kwork!</b>\n\n"
@@ -121,9 +91,8 @@ def check_kwork_loop():
         except Exception as e:
             print(f"Ошибка парсинга: {e}")
             
-        time.sleep(30)  # Проверка каждые 30 секунд
+        time.sleep(30)
 
-# Запускаем парсер в фоновом потоке
 parser_thread = threading.Thread(target=check_kwork_loop, daemon=True)
 parser_thread.start()
 
