@@ -44,6 +44,10 @@ def send_telegram_message(text):
 # 3. Фоновый цикл парсинга Kwork
 def check_kwork_loop():
     print("🔎 Фоновый парсер Kwork запущен!")
+    
+    # 🚀 ДОБАВЛЯЕМ ТЕСТОВУЮ ОТПРАВКУ ПРИ СТАРТЕ:
+    send_telegram_message("🤖 <b>Тест бота:</b> Сервер запущен, связь с Telegram работает!")
+    
     while True:
         try:
             response = requests.get(KWORK_URL, headers=HEADERS, timeout=15)
